@@ -38,6 +38,7 @@ class GithubTool
 
    begin
      load_orgs
+     show_orgs @orgs
    rescue GithubTool::NoOrgsFoundError
      print_newline
      say "<%= color('ERROR', BOLD) %>: No org names are found in settings.yml"
@@ -49,11 +50,12 @@ class GithubTool
     print_newline
     choose do |menu|
       menu.header = "*** Available commands ***"
-      menu.prompt = "What do you want to do? orgs/add/remove/show/quit"
+      menu.prompt = "What do you want to do? orgs/add/remove/show/compare/quit"
       menu.choice(:orgs, 'show the orgs') { show_orgs @orgs }
       menu.choice(:add, 'add a member to a team to all orgs') { add_team_member }
       menu.choice(:remove, 'remove a member from a team from all orgs') { remove_team_member }
-      menu.choice(:show, 'show members in a team in each of orgs') { show_team_members }
+      menu.choice(:show, 'show members in a team in each org') { show_team_members }
+      menu.choice(:compare, 'compare team members in each org') { compare_team_members }
       menu.choice(:quit, 'exit program') { exit }
     end
    end
@@ -67,6 +69,7 @@ class GithubTool
     @team_name = ask('which team> ') { |u| u.echo = true}
 
     lookup_github_user(@member)
+    return unless prompt_for_yes_or_no("is '#{bold @member}' the correct user")
 
     load_orgs.each do |org_name|
       print_newline
@@ -106,6 +109,7 @@ class GithubTool
     @team_name = ask('which team> ') { |u| u.echo = true}
 
     lookup_github_user(@member)
+    return unless prompt_for_yes_or_no("is '#{bold @member}' the correct user")
 
     load_orgs.each do |org_name|
       print_newline
@@ -170,6 +174,13 @@ class GithubTool
     end
   end
 
+  def compare_team_members
+    print_newline
+    say "#{bold 'Compare members of a team between the orgs'}"
+
+    say 'Not supported yet!'
+  end
+
   def load_orgs
     settings = YAML.load_file('settings.yml')
     @orgs = settings.fetch('orgs')
@@ -179,10 +190,7 @@ class GithubTool
     end
 
     @orgs = @orgs.split
-
-    show_orgs @orgs
   end
-
 
   def prompt_for_yes_or_no(question)
     loop do
@@ -202,9 +210,10 @@ class GithubTool
 
   def lookup_github_user(username)
     begin
-      $client.user(username)
+      user = $client.user(username)
       print_newline
       say "User '#{bold username}' is found on GitHub"
+      say "#{bold username}'s avatar: '#{bold user.avatar_url}"
     rescue Octokit::NotFound
       say "<%= color('ERROR', BOLD) %>: user '#{bold username}' is not a valid github user"
     end
