@@ -80,7 +80,6 @@ class GithubTool
           t.name == @team_name
         end.first
 
-
         unless team_found
           say "team '#{bold @team_name}' not found in org '#{bold org_name}'...Skipped"
           next
@@ -178,7 +177,22 @@ class GithubTool
     print_newline
     say "#{bold 'Compare members of a team between the orgs'}"
 
-    say 'Not supported yet!'
+    say "Not yet supported!"
+    return
+
+    team_name = ask('which team> ') { |u| u.echo = true}
+    common_members = []
+    say "Comparing team '#{bold team_name}' on all orgs..."
+    load_orgs.each do |org_name|
+      print_newline
+
+      begin
+        organization_teams = $client.organization_teams(org_name)
+        team_found = organization_teams.select do |t|
+          t.name == @team_name
+        end.first
+      end
+    end
   end
 
   def load_orgs
